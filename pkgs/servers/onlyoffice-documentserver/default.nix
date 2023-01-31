@@ -2,8 +2,7 @@
 , stdenv
 , buildFHSUserEnvBubblewrap
 , corefonts
-, dejavu_fonts
-, dpkg
+, dejavu_fonts , dpkg
 , fetchurl
 , gcc-unwrapped
 , liberation_ttf_v1
@@ -12,14 +11,26 @@
 }:
 
 let
+  version = "7.2.1";
+  dist = {
+    aarch64-linux = rec {
+      url = "https://github.com/ONLYOFFICE/DocumentServer/releases/download/v${lib.concatStringsSep "." (lib.take 3 (lib.splitVersion version))}/onlyoffice-documentserver_arm64.deb";
+      sha256 = "sha256-t+NO2cDttwKWOuo+R5Vqie2u888/NmLdcERyVXg5QrE=";
+    };
+
+    x86_64-linux = rec {
+      url = "https://github.com/ONLYOFFICE/DocumentServer/releases/download/v${lib.concatStringsSep "." (lib.take 3 (lib.splitVersion version))}/onlyoffice-documentserver_amd64.deb";
+      sha256 = "sha256-4MJLvc2ExIAwGnEkBvMJSINp+7SxOyhtKnNNA9QVxMk=";
+    };
+  };
   # var/www/onlyoffice/documentserver/server/DocService/docservice
   onlyoffice-documentserver = stdenv.mkDerivation rec {
+    inherit version;
     pname = "onlyoffice-documentserver";
-    version = "7.2.1";
 
     src = fetchurl {
-      url = "https://github.com/ONLYOFFICE/DocumentServer/releases/download/v${lib.concatStringsSep "." (lib.take 3 (lib.splitVersion version))}/onlyoffice-documentserver_amd64.deb";
-      sha256 = "sha256-V9s7UVz2BcuEObcsT6X2FulBlkz1BX2JM/bs/7vyZvI=";
+      inherit (dist.${stdenv.hostPlatform.system} or
+        (throw "Unsupported system: ${stdenv.hostPlatform.system}")) url sha256;
     };
 
     preferLocalBuild = true;
@@ -143,8 +154,8 @@ let
       '';
       homepage = "ONLYOFFICE Document Server is an online office suite comprising viewers and editors";
       license = licenses.agpl3;
-      platforms = [ "x86_64-linux" ];
-      sourceProvenance = sourceTypes.binaryNativeCode;
+      platforms = [ "aarch64-linux" "x86_64-linux" ];
+      sourceProvenance = [ sourceTypes.binaryNativeCode ];
       maintainers = with maintainers; [ SuperSandro2000 ];
     };
   };
